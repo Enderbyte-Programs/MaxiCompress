@@ -14,8 +14,6 @@ class plaintext:
     def compress(ind):
         return ind
 
-    
-
 def compressf(fl,stdscr,pobj:cursesplus.ProgressBar):
     """Returns tuple: (name,size,data)"""
     ogf = os.path.getsize(fl)
@@ -42,12 +40,15 @@ def compressf(fl,stdscr,pobj:cursesplus.ProgressBar):
     #print(fl.ljust(80),usedcomp.ljust(5),str(round(100 - min([ogf,len(gzcomp),len(bzcomp),len(lzcomp)]) / ogf * 100,0))+"%")
 
 args = sys.argv[1:]
+
+def do_setup_routine(stdscr):
+    pass
+
 if len(args) == 0:
-    print("Please provide an input file or folder")
-    sys.exit(-1)
+    args.append(input("Input file/directory> "))
+    args.append(input("Output file> "))
 args[0] = os.path.abspath(args[0])
 args[1] = os.path.abspath(args[1])
-
 def do_compress_routine(stdscr):
     DATA = []
     cursesplus.displaymsgnodelay(stdscr,["Compressing data"])
@@ -90,8 +91,8 @@ def do_compress_routine(stdscr):
         ci += 1
 
     final_header = b":".join(HEADERS)
-    headerlength = len(final_header) + 8#Limit 8 bytes for header length size
-    final_data = headerlength.to_bytes(length=len(str(headerlength))).lstrip(b'\0').rjust(8,b'\0') + final_header + b"".join(DATA)
+    headerlength = len(final_header) + 4#Limit 4 bytes for header length size
+    final_data = headerlength.to_bytes(length=len(str(headerlength))).lstrip(b'\0').rjust(4,b'\0') + final_header + b"".join(DATA)
     p1.step("Writing")
     OUTFILE = args[1]
     with open(OUTFILE,'wb') as f:
@@ -107,8 +108,8 @@ def decompress_routine(stdscr):
     with open(args[0],'rb') as f:
         data = f.read()
 
-    header_length = int.from_bytes(data[0:8])
-    header_data = data[8:header_length]
+    header_length = int.from_bytes(data[0:4])
+    header_data = data[4:header_length]
     datacores = header_data.split(b":")
     p.max = len(datacores) + 2
     if not os.path.isdir(args[1]):
